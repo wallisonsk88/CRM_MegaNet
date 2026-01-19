@@ -1,11 +1,13 @@
 {
   "name": "crm-meganet-server",
   "version": "1.0.0",
-  "main": "index.js",
   "dependencies": {
     "@libsql/client": "^0.17.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.22.1"
+  },
+  "scripts": {
+    "start": "node api/index.js"
   }
 }
