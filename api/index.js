@@ -7,23 +7,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Defensive database setup
-let db = null;
-try {
-    if (process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN) {
-        db = createClient({
-            url: process.env.TURSO_DATABASE_URL,
-            authToken: process.env.TURSO_AUTH_TOKEN,
-        });
-    }
-} catch (e) {
-    console.error('Failed to create Turso client:', e);
-}
+// Database setup for Turso
+const db = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
 let isDbInitialized = false;
 
 async function ensureDb() {
-    if (!db) throw new Error('Database environment variables are missing (TURSO_DATABASE_URL or TURSO_AUTH_TOKEN)');
     if (isDbInitialized) return;
     try {
         await db.execute(`
@@ -37,77 +29,80 @@ async function ensureDb() {
         isDbInitialized = true;
     } catch (err) {
         console.error('DB Init Error:', err);
-        throw err;
     }
 }
 
-// TEST ENDPOINT (No database needed)
-app.get('/api/test', (req, res) => {
-    res.json({
-        message: 'API is working!',
-        env_vars_detected: !!db,
-        time: new Date().toISOString()
-    });
-});
-
-// MAIN API ENDPOINTS
-app.get('/api/items', async (req, res) => {
+// ENDPOINTS
+const getItems = async (req, res) => {
+    await ensureDb();
     try {
-        await ensureDb();
         const rs = await db.execute('SELECT * FROM items');
         res.json(rs.rows || []);
     } catch (err) {
-        res.status(500).json({ error: 'Database Error', details: err.message });
+        res.status(500).json({ error: err.message });
     }
-});
+};
 
-app.post('/api/items', async (req, res) => {
+const addItem = async (req, res) => {
+    await ensureDb();
+    const { id, title, description, category } = req.body;
     try {
-        await ensureDb();
-        const { id, title, description, category } = req.body;
         await db.execute({
             sql: 'INSERT INTO items (id, title, description, category) VALUES (?, ?, ?, ?)',
             args: [id, title, description, category],
         });
         res.json({ message: 'success', data: req.body });
     } catch (err) {
-        res.status(500).json({ error: 'Database Error', details: err.message });
+        res.status(500).json({ error: err.message });
     }
-});
+};
 
-app.put('/api/items/:id', async (req, res) => {
+const updateItem = async (req, res) => {
+    await ensureDb();
+    const { category } = req.body;
     try {
-        await ensureDb();
-        const { category } = req.body;
         await db.execute({
             sql: 'UPDATE items SET category = ? WHERE id = ?',
             args: [category, req.params.id],
         });
         res.json({ status: 'updated' });
     } catch (err) {
-        res.status(500).json({ error: 'Database Error', details: err.message });
+        res.status(500).json({ error: err.message });
     }
-});
+};
 
-app.delete('/api/items/:id', async (req, res) => {
+const deleteItem = async (req, res) => {
+    await ensureDb();
     try {
-        await ensureDb();
         await db.execute({
             sql: 'DELETE FROM items WHERE id = ?',
             args: [req.params.id],
         });
         res.json({ message: 'deleted' });
     } catch (err) {
-        res.status(500).json({ error: 'Database Error', details: err.message });
+        res.status(500).json({ error: err.message });
     }
-});
+};
 
-// Root catch-all
-app.get('*', (req, res) => {
+// MULTI-PREFIX ROUTING for Vercel stability
+const router = express.Router();
+
+router.get('/items', getItems);
+router.post('/items', addItem);
+router.put('/items/:id', updateItem);
+router.delete('/items/:id', deleteItem);
+router.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
+
+// Register routes both with and without the /api prefix
+app.use('/api', router);
+app.use('/', router);
+
+// Final catch-all for 404s
+app.use((req, res) => {
     res.status(404).json({
-        error: 'Not Found',
+        error: 'Endpoint not found',
         path: req.path,
-        message: 'Use /api/items to access data or /api/test to verify API status.'
+        suggestion: 'Try /api/items'
     });
 });
 
