@@ -9,11 +9,12 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Database setup for Turso
 const db = createClient({
     url: process.env.TURSO_DATABASE_URL,
     authToken: process.env.TURSO_AUTH_TOKEN,
 });
+
+const router = express.Router();
 
 // Initialize database schema
 async function initDb() {
@@ -34,10 +35,8 @@ async function initDb() {
 
 initDb();
 
-// API Endpoints
-
-// Get all items
-app.get('/api/items', async (req, res) => {
+// API Endpoints using the router
+router.get('/items', async (req, res) => {
     try {
         const rs = await db.execute('SELECT * FROM items');
         res.json(rs.rows);
@@ -46,25 +45,20 @@ app.get('/api/items', async (req, res) => {
     }
 });
 
-// Add new item
-app.post('/api/items', async (req, res) => {
+router.post('/items', async (req, res) => {
     const { id, title, description, category } = req.body;
     try {
         await db.execute({
             sql: 'INSERT INTO items (id, title, description, category) VALUES (?, ?, ?, ?)',
             args: [id, title, description, category],
         });
-        res.json({
-            message: 'success',
-            data: req.body
-        });
+        res.json({ message: 'success', data: req.body });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-// Update item (for category change)
-app.put('/api/items/:id', async (req, res) => {
+router.put('/items/:id', async (req, res) => {
     const { category } = req.body;
     try {
         await db.execute({
@@ -77,8 +71,7 @@ app.put('/api/items/:id', async (req, res) => {
     }
 });
 
-// Delete item
-app.delete('/api/items/:id', async (req, res) => {
+router.delete('/items/:id', async (req, res) => {
     try {
         await db.execute({
             sql: 'DELETE FROM items WHERE id = ?',
@@ -90,13 +83,29 @@ app.delete('/api/items/:id', async (req, res) => {
     }
 });
 
-// Health check
-app.get('/', (req, res) => {
+// Mount the router on /api
+app.use('/api', router);
+
+// Health check and root paths
+app.get('/api', (req, res) => {
     res.send('CRM MegaNet API is running...');
 });
 
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+app.get('/', (req, res) => {
+    res.send('Server is active');
 });
+
+// Basic error handling
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something broke!');
+});
+
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => {
+        console.log(`Server running local on port ${port}`);
+    });
+}
 
 module.exports = app;
