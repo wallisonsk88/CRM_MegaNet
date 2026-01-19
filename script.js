@@ -1,3 +1,5 @@
+const API_URL = 'http://localhost:3000/api';
+
 // Configuração inicial das categorias
 const categories = {
     lead: { title: 'Instalação', color: '#007bff' },
@@ -11,9 +13,9 @@ const categories = {
 let formModal;
 
 // Inicializar o layout
-function initializeLayout() {
+async function initializeLayout() {
     const container = document.getElementById('categoriesContainer');
-    
+
     Object.keys(categories).forEach(categoryKey => {
         const column = document.createElement('div');
         column.className = 'col-md-4 col-lg-2';
@@ -29,8 +31,8 @@ function initializeLayout() {
     // Inicializar o modal
     formModal = new bootstrap.Modal(document.getElementById('formModal'));
 
-    // Carregar itens salvos do localStorage
-    loadItems();
+    // Carregar itens salvos do Servidor
+    await loadItems();
 }
 
 // Função para abrir/fechar o formulário
@@ -39,7 +41,7 @@ function toggleForm() {
 }
 
 // Adicionar novo item
-function addItem() {
+async function addItem() {
     const title = document.getElementById('itemTitle').value;
     const description = document.getElementById('itemDescription').value;
     const category = document.getElementById('itemCategory').value;
@@ -56,18 +58,24 @@ function addItem() {
         category
     };
 
-    // Salvar no localStorage
-    const items = getItems();
-    items.push(item);
-    localStorage.setItem('crmItems', JSON.stringify(items));
+    try {
+        const response = await fetch(`${API_URL}/items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+        });
 
-    // Adicionar item na interface
-    createItemCard(item);
-
-    // Limpar formulário e fechar modal
-    document.getElementById('itemTitle').value = '';
-    document.getElementById('itemDescription').value = '';
-    formModal.hide();
+        if (response.ok) {
+            createItemCard(item);
+            // Limpar formulário e fechar modal
+            document.getElementById('itemTitle').value = '';
+            document.getElementById('itemDescription').value = '';
+            formModal.hide();
+        }
+    } catch (error) {
+        console.error('Erro ao adicionar item:', error);
+        alert('Erro ao conectar com o servidor.');
+    }
 }
 
 // Criar card do item
@@ -93,23 +101,36 @@ function createItemCard(item) {
     categoryContainer.appendChild(card);
 }
 
-// Carregar itens do localStorage
-function loadItems() {
-    const items = getItems();
-    items.forEach(item => createItemCard(item));
-}
-
-// Obter itens do localStorage
-function getItems() {
-    const items = localStorage.getItem('crmItems');
-    return items ? JSON.parse(items) : [];
+// Carregar itens do Servidor
+async function loadItems() {
+    try {
+        const response = await fetch(`${API_URL}/items`);
+        const items = await response.json();
+        // Limpar containers antes de carregar
+        Object.keys(categories).forEach(cat => {
+            document.getElementById(`${cat}-items`).innerHTML = '';
+        });
+        items.forEach(item => createItemCard(item));
+    } catch (error) {
+        console.error('Erro ao carregar itens:', error);
+    }
 }
 
 // Deletar item
-function deleteItem(id) {
-    const items = getItems().filter(item => item.id !== id);
-    localStorage.setItem('crmItems', JSON.stringify(items));
-    document.getElementById(`item-${id}`).remove();
+async function deleteItem(id) {
+    if (!confirm('Tem certeza que deseja excluir?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/items/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            document.getElementById(`item-${id}`).remove();
+        }
+    } catch (error) {
+        console.error('Erro ao deletar item:', error);
+    }
 }
 
 // Inicializar quando o documento estiver carregado
@@ -122,25 +143,33 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
         });
 
-        column.addEventListener('drop', (e) => {
+        column.addEventListener('drop', async (e) => {
             e.preventDefault();
             const itemId = parseInt(e.dataTransfer.getData('text/plain'));
             const newCategory = column.querySelector('div[id$="-items"]').id.split('-')[0];
 
-            // Atualizar categoria no localStorage
-            const items = getItems();
-            const itemIndex = items.findIndex(item => item.id === itemId);
-            if (itemIndex !== -1) {
-                const oldCategory = items[itemIndex].category;
-                items[itemIndex].category = newCategory;
-                localStorage.setItem('crmItems', JSON.stringify(items));
+            // Atualizar categoria no Servidor
+            try {
+                const response = await fetch(`${API_URL}/items/${itemId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: newCategory })
+                });
 
-                // Mover o card para a nova coluna e atualizar sua cor
-                const card = document.getElementById(`item-${itemId}`);
-                card.classList.remove(`card-${oldCategory}`);
-                card.classList.add(`card-${newCategory}`);
-                document.getElementById(`${newCategory}-items`).appendChild(card);
+                if (response.ok) {
+                    const card = document.getElementById(`item-${itemId}`);
+                    // Extrair categoria antiga da classe
+                    const oldCategory = Array.from(card.classList)
+                        .find(c => c.startsWith('card-'))
+                        .replace('card-', '');
+
+                    card.classList.remove(`card-${oldCategory}`);
+                    card.classList.add(`card-${newCategory}`);
+                    document.getElementById(`${newCategory}-items`).appendChild(card);
+                }
+            } catch (error) {
+                console.error('Erro ao mover item:', error);
             }
         });
     });
-}); 
+});
