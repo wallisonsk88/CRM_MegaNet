@@ -4,17 +4,15 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
 
+// Database setup for Turso
 const db = createClient({
     url: process.env.TURSO_DATABASE_URL,
     authToken: process.env.TURSO_AUTH_TOKEN,
 });
-
-const router = express.Router();
 
 // Initialize database schema
 async function initDb() {
@@ -27,7 +25,6 @@ async function initDb() {
                 category TEXT NOT NULL
             )
         `);
-        console.log('Database initialized successfully.');
     } catch (err) {
         console.error('Error initializing database:', err);
     }
@@ -35,77 +32,69 @@ async function initDb() {
 
 initDb();
 
-// API Endpoints using the router
-router.get('/items', async (req, res) => {
-    try {
-        const rs = await db.execute('SELECT * FROM items');
-        res.json(rs.rows);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
+// Helper to handle async routes
+const asyncHandler = fn => (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+// ENDPOINTS
+// We handle both /api/items and /items to be safe with Vercel routing
+const getItems = asyncHandler(async (req, res) => {
+    const rs = await db.execute('SELECT * FROM items');
+    res.json(rs.rows);
 });
 
-router.post('/items', async (req, res) => {
+const addItem = asyncHandler(async (req, res) => {
     const { id, title, description, category } = req.body;
-    try {
-        await db.execute({
-            sql: 'INSERT INTO items (id, title, description, category) VALUES (?, ?, ?, ?)',
-            args: [id, title, description, category],
-        });
-        res.json({ message: 'success', data: req.body });
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-
-router.put('/items/:id', async (req, res) => {
-    const { category } = req.body;
-    try {
-        await db.execute({
-            sql: 'UPDATE items SET category = ? WHERE id = ?',
-            args: [category, req.params.id],
-        });
-        res.json({ status: 'updated' });
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-
-router.delete('/items/:id', async (req, res) => {
-    try {
-        await db.execute({
-            sql: 'DELETE FROM items WHERE id = ?',
-            args: [req.params.id],
-        });
-        res.json({ message: 'deleted' });
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-});
-
-// Mount the router on /api
-app.use('/api', router);
-
-// Health check and root paths
-app.get('/api', (req, res) => {
-    res.send('CRM MegaNet API is running...');
-});
-
-app.get('/', (req, res) => {
-    res.send('Server is active');
-});
-
-// Basic error handling
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).send('Something broke!');
-});
-
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(port, () => {
-        console.log(`Server running local on port ${port}`);
+    await db.execute({
+        sql: 'INSERT INTO items (id, title, description, category) VALUES (?, ?, ?, ?)',
+        args: [id, title, description, category],
     });
-}
+    res.json({ message: 'success', data: req.body });
+});
+
+const updateItem = asyncHandler(async (req, res) => {
+    const { category } = req.body;
+    await db.execute({
+        sql: 'UPDATE items SET category = ? WHERE id = ?',
+        args: [category, req.params.id],
+    });
+    res.json({ status: 'updated' });
+});
+
+const deleteItem = asyncHandler(async (req, res) => {
+    await db.execute({
+        sql: 'DELETE FROM items WHERE id = ?',
+        args: [req.params.id],
+    });
+    res.json({ message: 'deleted' });
+});
+
+// Routes with /api prefix
+app.get('/api/items', getItems);
+app.post('/api/items', addItem);
+app.put('/api/items/:id', updateItem);
+app.delete('/api/items/:id', deleteItem);
+
+// Routes without /api prefix (for some Vercel configurations)
+app.get('/items', getItems);
+app.post('/items', addItem);
+app.put('/items/:id', updateItem);
+app.delete('/items/:id', deleteItem);
+
+// Health check
+app.get('/api/health', (req, res) => res.send('API is healthy'));
+app.get('/health', (req, res) => res.send('API is healthy'));
+
+// Root
+app.get('/', (req, res) => {
+    res.send('CRM MegaNet API is active. Use /api/items to access data.');
+});
+
+// Error handling
+app.use((err, req, res, next) => {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+});
 
 module.exports = app;
