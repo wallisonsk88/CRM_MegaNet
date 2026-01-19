@@ -14,7 +14,7 @@ const db = createClient({
     authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-// Initialize database schema
+// Initialize database schema (runs on every cold start)
 async function initDb() {
     try {
         await db.execute(`
@@ -32,69 +32,75 @@ async function initDb() {
 
 initDb();
 
-// Helper to handle async routes
-const asyncHandler = fn => (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+// ENDPOINTS LOGIC
+const getItems = async (req, res) => {
+    try {
+        const rs = await db.execute('SELECT * FROM items');
+        res.json(rs.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
 
-// ENDPOINTS
-// We handle both /api/items and /items to be safe with Vercel routing
-const getItems = asyncHandler(async (req, res) => {
-    const rs = await db.execute('SELECT * FROM items');
-    res.json(rs.rows);
-});
-
-const addItem = asyncHandler(async (req, res) => {
+const addItem = async (req, res) => {
     const { id, title, description, category } = req.body;
-    await db.execute({
-        sql: 'INSERT INTO items (id, title, description, category) VALUES (?, ?, ?, ?)',
-        args: [id, title, description, category],
-    });
-    res.json({ message: 'success', data: req.body });
-});
+    try {
+        await db.execute({
+            sql: 'INSERT INTO items (id, title, description, category) VALUES (?, ?, ?, ?)',
+            args: [id, title, description, category],
+        });
+        res.json({ message: 'success', data: req.body });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
 
-const updateItem = asyncHandler(async (req, res) => {
+const updateItem = async (req, res) => {
     const { category } = req.body;
-    await db.execute({
-        sql: 'UPDATE items SET category = ? WHERE id = ?',
-        args: [category, req.params.id],
+    try {
+        await db.execute({
+            sql: 'UPDATE items SET category = ? WHERE id = ?',
+            args: [category, req.params.id],
+        });
+        res.json({ status: 'updated' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const deleteItem = async (req, res) => {
+    try {
+        await db.execute({
+            sql: 'DELETE FROM items WHERE id = ?',
+            args: [req.params.id],
+        });
+        res.json({ message: 'deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// MULTI-PATH ROUTING (Resilient to Vercel path variations)
+const router = express.Router();
+
+router.get('/items', getItems);
+router.post('/items', addItem);
+router.put('/items/:id', updateItem);
+router.delete('/items/:id', deleteItem);
+router.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
+
+// Mount router on multiple paths to be safe
+app.use('/api', router);
+app.use('/', router);
+
+// Final catch-all for 404s WITHIN Express
+app.use((req, res) => {
+    res.status(404).json({
+        error: 'API Route not found',
+        path: req.path,
+        method: req.method,
+        help: 'Try /api/items or /items'
     });
-    res.json({ status: 'updated' });
-});
-
-const deleteItem = asyncHandler(async (req, res) => {
-    await db.execute({
-        sql: 'DELETE FROM items WHERE id = ?',
-        args: [req.params.id],
-    });
-    res.json({ message: 'deleted' });
-});
-
-// Routes with /api prefix
-app.get('/api/items', getItems);
-app.post('/api/items', addItem);
-app.put('/api/items/:id', updateItem);
-app.delete('/api/items/:id', deleteItem);
-
-// Routes without /api prefix (for some Vercel configurations)
-app.get('/items', getItems);
-app.post('/items', addItem);
-app.put('/items/:id', updateItem);
-app.delete('/items/:id', deleteItem);
-
-// Health check
-app.get('/api/health', (req, res) => res.send('API is healthy'));
-app.get('/health', (req, res) => res.send('API is healthy'));
-
-// Root
-app.get('/', (req, res) => {
-    res.send('CRM MegaNet API is active. Use /api/items to access data.');
-});
-
-// Error handling
-app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(500).json({ error: err.message });
 });
 
 module.exports = app;
