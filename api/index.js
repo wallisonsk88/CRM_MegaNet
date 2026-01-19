@@ -1,7 +1,6 @@
 const express = require('express');
 const { createClient } = require('@libsql/client');
 const cors = require('cors');
-require('dotenv').config();
 
 const app = express();
 
@@ -14,8 +13,11 @@ const db = createClient({
     authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-// Initialize database schema (runs on every cold start)
-async function initDb() {
+// Cache for schema initialization
+let isDbInitialized = false;
+
+async function ensureDb() {
+    if (isDbInitialized) return;
     try {
         await db.execute(`
             CREATE TABLE IF NOT EXISTS items (
@@ -25,24 +27,25 @@ async function initDb() {
                 category TEXT NOT NULL
             )
         `);
+        isDbInitialized = true;
     } catch (err) {
-        console.error('Error initializing database:', err);
+        console.error('DB Init Error:', err);
     }
 }
 
-initDb();
-
-// ENDPOINTS LOGIC
-const getItems = async (req, res) => {
+// API Routes
+app.get('/api/items', async (req, res) => {
+    await ensureDb();
     try {
         const rs = await db.execute('SELECT * FROM items');
         res.json(rs.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-};
+});
 
-const addItem = async (req, res) => {
+app.post('/api/items', async (req, res) => {
+    await ensureDb();
     const { id, title, description, category } = req.body;
     try {
         await db.execute({
@@ -53,9 +56,10 @@ const addItem = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-};
+});
 
-const updateItem = async (req, res) => {
+app.put('/api/items/:id', async (req, res) => {
+    await ensureDb();
     const { category } = req.body;
     try {
         await db.execute({
@@ -66,9 +70,10 @@ const updateItem = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-};
+});
 
-const deleteItem = async (req, res) => {
+app.delete('/api/items/:id', async (req, res) => {
+    await ensureDb();
     try {
         await db.execute({
             sql: 'DELETE FROM items WHERE id = ?',
@@ -78,29 +83,16 @@ const deleteItem = async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-};
+});
 
-// MULTI-PATH ROUTING (Resilient to Vercel path variations)
-const router = express.Router();
+// Fallback for /api root
+app.get('/api', (req, res) => {
+    res.json({ message: 'CRM MegaNet API is active', help: 'Use /api/items' });
+});
 
-router.get('/items', getItems);
-router.post('/items', addItem);
-router.put('/items/:id', updateItem);
-router.delete('/items/:id', deleteItem);
-router.get('/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
-
-// Mount router on multiple paths to be safe
-app.use('/api', router);
-app.use('/', router);
-
-// Final catch-all for 404s WITHIN Express
-app.use((req, res) => {
-    res.status(404).json({
-        error: 'API Route not found',
-        path: req.path,
-        method: req.method,
-        help: 'Try /api/items or /items'
-    });
+// Error handling
+app.use((err, req, res, next) => {
+    res.status(500).json({ error: 'Internal Server Error', detail: err.message });
 });
 
 module.exports = app;
