@@ -101,16 +101,34 @@ function createItemCard(item) {
 async function loadItems() {
     try {
         const response = await fetch(`${API_URL}/items`);
-        if (!response.ok) throw new Error('Não foi possível carregar os dados');
+        const data = await response.json();
 
-        const items = await response.json();
+        if (!response.ok || !Array.isArray(data)) {
+            console.error('Erro do Servidor:', data);
+            const errorMsg = data.details || data.error || 'Erro desconhecido';
+
+            const container = document.getElementById('categoriesContainer');
+            if (container) {
+                container.innerHTML = `
+                    <div class="col-12 mt-4 px-4">
+                        <div class="alert alert-danger glass-modal" style="border-left: 5px solid #dc3545">
+                            <h4 class="alert-heading fw-bold">⚠️ Erro de Banco de Dados</h4>
+                            <p>${errorMsg}</p>
+                            <hr>
+                            <p class="mb-0"><strong>Dica:</strong> Vá em <em>Settings -> Environment Variables</em> na Vercel, adicione <code>TURSO_DATABASE_URL</code> e <code>TURSO_AUTH_TOKEN</code>, e faça um "Redeploy".</p>
+                        </div>
+                    </div>
+                `;
+            }
+            return;
+        }
 
         Object.keys(categories).forEach(cat => {
             const container = document.getElementById(`${cat}-items`);
             if (container) container.innerHTML = '';
         });
 
-        items.forEach(item => createItemCard(item));
+        data.forEach(item => createItemCard(item));
     } catch (error) {
         console.error('Erro ao carregar itens:', error);
     }
