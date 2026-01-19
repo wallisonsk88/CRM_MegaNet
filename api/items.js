@@ -7,13 +7,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Database setup for Turso
 const db = createClient({
     url: process.env.TURSO_DATABASE_URL,
     authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-// Cache for schema initialization
 let isDbInitialized = false;
 
 async function ensureDb() {
@@ -33,7 +31,9 @@ async function ensureDb() {
     }
 }
 
-// API Routes
+// NOTE: Vercel routes /api/items to this file.
+// So internal routes should be relative to that.
+
 app.get('/api/items', async (req, res) => {
     await ensureDb();
     try {
@@ -44,7 +44,18 @@ app.get('/api/items', async (req, res) => {
     }
 });
 
-app.post('/api/items', async (req, res) => {
+// Also handle the base path '/' just in case
+app.get('/', async (req, res) => {
+    await ensureDb();
+    try {
+        const rs = await db.execute('SELECT * FROM items');
+        res.json(rs.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/', async (req, res) => {
     await ensureDb();
     const { id, title, description, category } = req.body;
     try {
@@ -58,7 +69,7 @@ app.post('/api/items', async (req, res) => {
     }
 });
 
-app.put('/api/items/:id', async (req, res) => {
+app.put('/:id', async (req, res) => {
     await ensureDb();
     const { category } = req.body;
     try {
@@ -72,7 +83,7 @@ app.put('/api/items/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/items/:id', async (req, res) => {
+app.delete('/:id', async (req, res) => {
     await ensureDb();
     try {
         await db.execute({
@@ -83,16 +94,6 @@ app.delete('/api/items/:id', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
-});
-
-// Fallback for /api root
-app.get('/api', (req, res) => {
-    res.json({ message: 'CRM MegaNet API is active', help: 'Use /api/items' });
-});
-
-// Error handling
-app.use((err, req, res, next) => {
-    res.status(500).json({ error: 'Internal Server Error', detail: err.message });
 });
 
 module.exports = app;
