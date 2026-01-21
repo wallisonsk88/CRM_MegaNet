@@ -78,13 +78,6 @@ async function addItem() {
     }
 }
 
-card.addEventListener('dragend', () => {
-    card.style.opacity = '1';
-});
-
-const categoryContainer = document.getElementById(`${item.category}-items`);
-if (categoryContainer) categoryContainer.appendChild(card);
-}
 
 function formatDate(isoString) {
     if (!isoString) return '';
