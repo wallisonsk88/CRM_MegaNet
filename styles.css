@@ -6,7 +6,7 @@
     --text-main: #f8f9fa;
     --text-muted: #adb5bd;
     --glass-border: rgba(255, 255, 255, 0.1);
-    
+
     /* Category Colors - Preserved as requested */
     --cat-lead: #007bff;
     --cat-prospect: #28a745;
@@ -52,50 +52,52 @@ body {
 
 /* Navigation */
 .navbar {
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--glass-border);
+    background: var(--primary-gradient);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding: 1.2rem 0;
+    box-shadow: 0 4px 20px rgba(255, 123, 0, 0.3);
 }
 
 .logo-icon {
     width: 40px;
     height: 40px;
-    background: var(--primary-gradient);
+    background: white;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    color: white;
-    box-shadow: 0 4px 15px rgba(255, 123, 0, 0.3);
+    color: var(--primary-orange);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-brand {
     color: white !important;
     font-size: 1.5rem;
     letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .text-primary-accent {
-    color: var(--primary-orange);
+    color: white !important;
 }
 
 .btn-add {
-    background: var(--primary-gradient);
+    background: white;
     border: none;
-    color: white;
+    color: var(--primary-orange);
     padding: 0.8rem 1.5rem;
     border-radius: 12px;
-    font-weight: 600;
+    font-weight: 700;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(255, 123, 0, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .btn-add:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 123, 0, 0.4);
-    color: white;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    color: #ff4d00;
+    background: #f8f9fa;
 }
 
 /* Dashboard Columns */
@@ -180,11 +182,25 @@ body {
 }
 
 /* Preserve original colors in the indicator */
-.card-lead { border-left: 4px solid var(--cat-lead); }
-.card-prospect { border-left: 4px solid var(--cat-prospect); }
-.card-inNegotiation { border-left: 4px solid var(--cat-inNegotiation); }
-.card-closed { border-left: 4px solid var(--cat-closed); }
-.card-lost { border-left: 4px solid var(--cat-lost); }
+.card-lead {
+    border-left: 4px solid var(--cat-lead);
+}
+
+.card-prospect {
+    border-left: 4px solid var(--cat-prospect);
+}
+
+.card-inNegotiation {
+    border-left: 4px solid var(--cat-inNegotiation);
+}
+
+.card-closed {
+    border-left: 4px solid var(--cat-closed);
+}
+
+.card-lost {
+    border-left: 4px solid var(--cat-lost);
+}
 
 /* Modal Premium */
 .glass-modal {
@@ -194,14 +210,16 @@ body {
     border-radius: 25px;
 }
 
-.form-control, .form-select {
+.form-control,
+.form-select {
     background: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid var(--glass-border) !important;
     color: white !important;
     border-radius: 12px !important;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
     box-shadow: 0 0 0 2px rgba(255, 123, 0, 0.25) !important;
     border-color: var(--primary-orange) !important;
 }
