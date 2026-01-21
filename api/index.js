@@ -50,7 +50,7 @@ app.get('/api/items', async (req, res) => {
 app.post('/api/items', async (req, res) => {
     try {
         const db = getDb();
-        const { id, title, description, category } = req.body;
+        const { id, title, description, category, completed_by } = req.body;
 
         // Ensure table exists on first write (lazy init)
         await db.execute(`
@@ -58,13 +58,21 @@ app.post('/api/items', async (req, res) => {
                 id INTEGER PRIMARY KEY,
                 title TEXT NOT NULL,
                 description TEXT,
-                category TEXT NOT NULL
+                category TEXT NOT NULL,
+                completed_by TEXT
             )
         `);
 
+        // Migration for older tables
+        try {
+            await db.execute('ALTER TABLE items ADD COLUMN completed_by TEXT');
+        } catch (e) {
+            // Column likely exists
+        }
+
         await db.execute({
-            sql: 'INSERT INTO items (id, title, description, category) VALUES (?, ?, ?, ?)',
-            args: [id, title, description, category],
+            sql: 'INSERT INTO items (id, title, description, category, completed_by) VALUES (?, ?, ?, ?, ?)',
+            args: [id, title, description, category, completed_by || null],
         });
         res.json({ message: 'success', data: req.body });
     } catch (err) {
@@ -76,11 +84,20 @@ app.post('/api/items', async (req, res) => {
 app.put('/api/items/:id', async (req, res) => {
     try {
         const db = getDb();
-        const { category } = req.body;
-        await db.execute({
-            sql: 'UPDATE items SET category = ? WHERE id = ?',
-            args: [category, req.params.id],
-        });
+        const { category, completed_by } = req.body;
+
+        if (completed_by !== undefined) {
+            await db.execute({
+                sql: 'UPDATE items SET category = ?, completed_by = ? WHERE id = ?',
+                args: [category, completed_by, req.params.id],
+            });
+        } else {
+            await db.execute({
+                sql: 'UPDATE items SET category = ? WHERE id = ?',
+                args: [category, req.params.id],
+            });
+        }
+
         res.json({ status: 'updated' });
     } catch (err) {
         res.status(500).json({ error: err.message });

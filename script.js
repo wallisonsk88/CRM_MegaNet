@@ -5,7 +5,8 @@ const categories = {
     prospect: { title: 'Suporte', color: '#28a745' },
     inNegotiation: { title: 'Pagamento', color: '#ffc107' },
     closed: { title: 'Cancelamento', color: '#dc3545' },
-    lost: { title: 'Outros', color: '#17a2b8' }
+    lost: { title: 'Outros', color: '#17a2b8' },
+    done: { title: 'Concluídos', color: '#20c997' }
 };
 
 let formModal;
@@ -19,7 +20,9 @@ async function initializeLayout() {
         column.className = 'col-auto';
         column.innerHTML = `
             <div class="category-column px-4">
-                <div class="category-title">${categories[categoryKey].title}</div>
+                <div class="category-title" style="border-left: 4px solid ${categories[categoryKey].color}; padding-left: 10px;">
+                    ${categories[categoryKey].title}
+                </div>
                 <div id="${categoryKey}-items" class="h-100 pb-5"></div>
             </div>
         `;
@@ -79,10 +82,25 @@ function createItemCard(item) {
     card.className = `item-card card-${item.category} animate-in`;
     card.setAttribute('draggable', 'true');
     card.id = `item-${item.id}`;
+
+    let actionButtons = '';
+    let extraInfo = '';
+
+    if (item.category === 'done' && item.completed_by) {
+        extraInfo = `<div class="completed-info mt-2"><small>✅ Concluído por: <strong>${item.completed_by}</strong></small></div>`;
+    }
+    else if (item.category !== 'done' && item.category !== 'closed') {
+        actionButtons = `<button class="btn-conclude" onclick="concludeItem(${item.id})">Concluir</button>`;
+    }
+
     card.innerHTML = `
         <div class="item-title">${item.title}</div>
         <div class="item-description">${item.description}</div>
-        <button class="btn-delete" onclick="deleteItem(${item.id})">Remover</button>
+        ${extraInfo}
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            ${actionButtons}
+            <button class="btn-delete" onclick="deleteItem(${item.id})">Remover</button>
+        </div>
     `;
 
     card.addEventListener('dragstart', (e) => {
@@ -98,6 +116,36 @@ function createItemCard(item) {
     if (categoryContainer) categoryContainer.appendChild(card);
 }
 
+async function concludeItem(id) {
+    const name = prompt("Para concluir, digite seu NOME:");
+
+    if (name === null) return;
+
+    if (!name.trim()) {
+        alert("É obrigatório informar o nome para concluir!");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/items/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                category: 'done',
+                completed_by: name.trim()
+            })
+        });
+
+        if (response.ok) {
+            document.location.reload();
+        } else {
+            alert('Erro ao concluir item.');
+        }
+    } catch (error) {
+        console.error('Erro ao concluir:', error);
+    }
+}
+
 async function loadItems() {
     try {
         const response = await fetch(`${API_URL}/items`);
@@ -111,7 +159,7 @@ async function loadItems() {
             if (container) {
                 container.innerHTML = `
                     <div class="col-12 mt-4 px-4">
-                        <div class="alert alert-danger glass-modal" style="border-left: 5px solid #dc3545">
+                         <div class="alert alert-danger glass-modal" style="border-left: 5px solid #dc3545">
                             <h4 class="alert-heading fw-bold">⚠️ Erro de Banco de Dados</h4>
                             <p>${errorMsg}</p>
                             <hr>
@@ -163,6 +211,11 @@ function setupDragAndDrop() {
             const itemsContainer = column.querySelector('div[id$="-items"]');
             const newCategory = itemsContainer.id.split('-')[0];
 
+            if (newCategory === 'done') {
+                alert("Use o botão 'Concluir' no card para mover para esta coluna.");
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_URL}/items/${itemId}`, {
                     method: 'PUT',
@@ -174,7 +227,6 @@ function setupDragAndDrop() {
                     const card = document.getElementById(`item-${itemId}`);
                     if (!card) return;
 
-                    // Remove existing class and add new one
                     const oldClasses = Array.from(card.classList).filter(c => c.startsWith('card-'));
                     oldClasses.forEach(c => card.classList.remove(c));
                     card.classList.add(`card-${newCategory}`);

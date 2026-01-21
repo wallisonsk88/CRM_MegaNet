@@ -140,6 +140,30 @@ body {
     /* Snap to center on mobile */
 }
 
+/* Feature: Conclude Button */
+.btn-conclude {
+    background: #20c997;
+    border: none;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin-right: auto;
+}
+
+.btn-conclude:hover {
+    background: #1baa80;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(32, 201, 151, 0.3);
+}
+
+.completed-info {
+    font-family: 'Outfit', sans-serif;
+    color: #20c997;
+}
+
 /* Mobile Optimizations */
 @media (max-width: 768px) {
     .navbar-brand {
