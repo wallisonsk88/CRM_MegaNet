@@ -1,3 +1,4 @@
+console.log("CRM Loaded: v2.1 (Conclude Feature)");
 const API_URL = '/api';
 
 const categories = {
