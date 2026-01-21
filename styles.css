@@ -104,6 +104,10 @@ body {
 .dashboard-scroll {
     overflow-x: auto;
     padding-bottom: 2rem;
+    /* Smooth Scroll and Snapping for Mobile */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
 }
 
 .dashboard-scroll::-webkit-scrollbar {
@@ -124,11 +128,55 @@ body {
     border: 1px solid var(--glass-border);
     border-radius: 20px;
     min-width: 300px;
+    width: 300px;
+    /* Fixed width for consistency */
     height: calc(100vh - 160px);
+    /* Fill height */
     display: flex;
     flex-direction: column;
     padding: 1.2rem;
     transition: border-color 0.3s ease;
+    scroll-snap-align: center;
+    /* Snap to center on mobile */
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .btn-add {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .dashboard-scroll {
+        display: flex;
+        /* Force horizontal layout */
+        flex-wrap: nowrap;
+        /* Prevent wrapping */
+        padding-left: 1rem;
+        /* Start padding */
+        padding-right: 1rem;
+        gap: 1rem;
+        /* Space between columns */
+    }
+
+    .row.g-4 {
+        margin: 0;
+        display: flex;
+        flex-wrap: nowrap;
+    }
+
+    .category-column {
+        height: calc(100vh - 140px);
+        /* Slight adjust for mobile address bar */
+        min-width: 85vw;
+        /* Take mostly full width */
+        width: 85vw;
+        margin-right: 0;
+    }
 }
 
 .category-column:hover {
