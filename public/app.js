@@ -78,7 +78,6 @@ async function addItem() {
     }
 }
 
-
 function formatDate(isoString) {
     if (!isoString) return '';
     const date = new Date(isoString);
@@ -151,7 +150,8 @@ async function concludeItem(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 category: 'done',
-                completed_by: name.trim()
+                completed_by: name.trim(),
+                completed_at: new Date().toISOString()
             })
         });
 

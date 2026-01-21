@@ -164,7 +164,7 @@ body {
     color: #20c997;
 }
 
-/* Mobile Optimizations */
+/* Mobile Optimizations - VERTICAL STACK */
 @media (max-width: 768px) {
     .navbar-brand {
         font-size: 1.2rem;
@@ -175,31 +175,43 @@ body {
         font-size: 0.9rem;
     }
 
+    /* Disable horizontal scroll, enable vertical stack */
     .dashboard-scroll {
-        display: flex;
-        /* Force horizontal layout */
-        flex-wrap: nowrap;
-        /* Prevent wrapping */
-        padding-left: 1rem;
-        /* Start padding */
-        padding-right: 1rem;
-        gap: 1rem;
-        /* Space between columns */
+        display: block;
+        overflow-x: hidden;
+        /* No side scroll */
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
     }
 
     .row.g-4 {
         margin: 0;
         display: flex;
-        flex-wrap: nowrap;
+        flex-direction: column;
+        /* Stack vertically! */
+        gap: 2rem;
+        /* Space between categories */
     }
 
     .category-column {
-        height: calc(100vh - 140px);
-        /* Slight adjust for mobile address bar */
-        min-width: 85vw;
-        /* Take mostly full width */
-        width: 85vw;
-        margin-right: 0;
+        height: auto;
+        /* Auto height to fit all cards */
+        min-height: 200px;
+        min-width: 100%;
+        /* Full width */
+        width: 100%;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .item-card {
+        padding: 1rem;
+        /* Slightly less padding to save space */
+    }
+
+    /* Hide scrollbar since it's normal page scroll now */
+    .dashboard-scroll::-webkit-scrollbar {
+        display: none;
     }
 }
 
