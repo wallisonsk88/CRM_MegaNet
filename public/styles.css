@@ -1,81 +1,329 @@
+:root {
+    --bg-dark: #0a0a0c;
+    --card-bg: rgba(26, 26, 30, 0.8);
+    --primary-orange: #ff7b00;
+    --primary-gradient: linear-gradient(135deg, #ff7b00 0%, #ff4d00 100%);
+    --text-main: #f8f9fa;
+    --text-muted: #adb5bd;
+    --glass-border: rgba(255, 255, 255, 0.1);
+
+    /* Category Colors - Preserved as requested */
+    --cat-lead: #007bff;
+    --cat-prospect: #28a745;
+    --cat-inNegotiation: #ffc107;
+    --cat-closed: #dc3545;
+    --cat-lost: #17a2b8;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Outfit', sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* Background Animated Blobs */
+.background-blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: -1;
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.blob-1 {
+    width: 400px;
+    height: 400px;
+    background: var(--primary-orange);
+    top: -100px;
+    right: -100px;
+}
+
+.blob-2 {
+    width: 300px;
+    height: 300px;
+    background: #ff4d00;
+    bottom: -50px;
+    left: -50px;
+}
+
+/* Navigation */
+.navbar {
+    background: var(--primary-gradient);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 1.2rem 0;
+    box-shadow: 0 4px 20px rgba(255, 123, 0, 0.3);
+}
+
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: var(--primary-orange);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    color: white !important;
+    font-size: 1.5rem;
+    letter-spacing: -0.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.text-primary-accent {
+    color: white !important;
+}
+
+.btn-add {
+    background: white;
+    border: none;
+    color: var(--primary-orange);
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-add:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    color: #ff4d00;
+    background: #f8f9fa;
+}
+
+/* Dashboard Columns */
+.dashboard-scroll {
+    overflow-x: auto;
+    padding-bottom: 2rem;
+    /* Smooth Scroll and Snapping for Mobile */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+}
+
+.dashboard-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.dashboard-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dashboard-scroll::-webkit-scrollbar-thumb {
+    background: var(--primary-orange);
+    border-radius: 10px;
+}
+
 .category-column {
-    min-height: 600px;
-    background-color: #f8f9fa;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    min-width: 300px;
+    width: 300px;
+    /* Fixed width for consistency */
+    height: calc(100vh - 160px);
+    /* Fill height */
+    display: flex;
+    flex-direction: column;
+    padding: 1.2rem;
+    transition: border-color 0.3s ease;
+    scroll-snap-align: center;
+    /* Snap to center on mobile */
+}
+
+/* Feature: Conclude Button */
+.btn-conclude {
+    background: #20c997;
+    border: none;
+    color: white;
+    padding: 0.4rem 0.8rem;
     border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    margin-right: auto;
+}
+
+.btn-conclude:hover {
+    background: #1baa80;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(32, 201, 151, 0.3);
+}
+
+.completed-info {
+    font-family: 'Outfit', sans-serif;
+    color: #20c997;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.2rem;
+    }
+
+    .btn-add {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .dashboard-scroll {
+        display: flex;
+        /* Force horizontal layout */
+        flex-wrap: nowrap;
+        /* Prevent wrapping */
+        padding-left: 1rem;
+        /* Start padding */
+        padding-right: 1rem;
+        gap: 1rem;
+        /* Space between columns */
+    }
+
+    .row.g-4 {
+        margin: 0;
+        display: flex;
+        flex-wrap: nowrap;
+    }
+
+    .category-column {
+        height: calc(100vh - 140px);
+        /* Slight adjust for mobile address bar */
+        min-width: 85vw;
+        /* Take mostly full width */
+        width: 85vw;
+        margin-right: 0;
+    }
+}
+
+.category-column:hover {
+    border-color: rgba(255, 123, 0, 0.3);
 }
 
 .category-title {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #dee2e6;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
+.category-title::before {
+    content: '';
+    width: 4px;
+    height: 18px;
+    background: var(--primary-orange);
+    border-radius: 2px;
+}
+
+/* Item Cards */
 .item-card {
-    border-radius: 6px;
-    padding: 15px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    cursor: move;
-    color: white;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    cursor: grab;
+    transition: all 0.2s ease;
 }
 
 .item-card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    background: rgba(255, 255, 255, 0.05);
+    transform: scale(1.02);
 }
 
 .item-title {
-    font-weight: bold;
-    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+    color: var(--text-main);
 }
 
 .item-description {
-    font-size: 0.9rem;
-    opacity: 0.9;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.4;
 }
 
-/* Cores específicas para cada categoria */
-.category-lead {
-    border-top: 4px solid #007bff;
-}
-
-.category-prospect {
-    border-top: 4px solid #28a745;
-}
-
-.category-inNegotiation {
-    border-top: 4px solid #ffc107;
-}
-
-.category-closed {
-    border-top: 4px solid #dc3545;
-}
-
-.category-lost {
-    border-top: 4px solid #17a2b8;
-}
-
-/* Cores para os cards */
+/* Preserve original colors in the indicator */
 .card-lead {
-    background-color: #007bff;
+    border-left: 4px solid var(--cat-lead);
 }
 
 .card-prospect {
-    background-color: #28a745;
+    border-left: 4px solid var(--cat-prospect);
 }
 
 .card-inNegotiation {
-    background-color: #ffc107;
-    color: #000 !important; /* Texto escuro para melhor contraste */
+    border-left: 4px solid var(--cat-inNegotiation);
 }
 
 .card-closed {
-    background-color: #dc3545;
+    border-left: 4px solid var(--cat-closed);
 }
 
 .card-lost {
-    background-color: #17a2b8;
-} 
+    border-left: 4px solid var(--cat-lost);
+}
+
+/* Modal Premium */
+.glass-modal {
+    background: rgba(20, 20, 25, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 25px;
+}
+
+.form-control,
+.form-select {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid var(--glass-border) !important;
+    color: white !important;
+    border-radius: 12px !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 2px rgba(255, 123, 0, 0.25) !important;
+    border-color: var(--primary-orange) !important;
+}
+
+.btn-save {
+    background: var(--primary-gradient);
+    border: none;
+    color: white;
+    padding: 0.6rem 2rem;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-secondary-glass {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 0.6rem 1.5rem;
+}
+
+.btn-delete {
+    background: rgba(220, 53, 69, 0.1);
+    color: #ff4d5a;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    margin-top: 10px;
+    transition: all 0.2s;
+}
+
+.btn-delete:hover {
+    background: rgba(220, 53, 69, 0.2);
+}
