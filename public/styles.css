@@ -102,7 +102,7 @@ body {
 
 /* Dashboard Columns */
 .dashboard-scroll {
-    overflow-x: auto;
+    overflow-x: hidden;
     padding-bottom: 2rem;
     /* Smooth Scroll and Snapping for Mobile */
     scroll-behavior: smooth;
@@ -127,9 +127,8 @@ body {
     background: var(--card-bg);
     border: 1px solid var(--glass-border);
     border-radius: 20px;
-    min-width: 300px;
-    width: 300px;
-    /* Fixed width for consistency */
+    flex: 1;
+    min-width: 200px;
     height: calc(100vh - 160px);
     /* Fill height */
     display: flex;
