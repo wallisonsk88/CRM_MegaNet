@@ -38,7 +38,9 @@ app.get('/api/items', async (req, res) => {
         console.error('API Error:', err);
         res.status(500).json({
             error: 'Server Error',
-            details: err.message,
+            message: err.message,
+            stack: err.stack,
+            type: err.name,
             env_status: {
                 url_set: !!process.env.TURSO_DATABASE_URL,
                 token_set: !!process.env.TURSO_AUTH_TOKEN
@@ -83,7 +85,11 @@ app.post('/api/items', async (req, res) => {
         res.json({ message: 'success', data: { ...req.body, created_at } });
     } catch (err) {
         console.error('API Error:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({
+            error: 'Server Error',
+            message: err.message,
+            stack: err.stack
+        });
     }
 });
 
