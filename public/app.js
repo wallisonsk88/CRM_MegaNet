@@ -2,11 +2,11 @@ console.log("CRM Loaded: v2.1 (Conclude Feature)");
 const API_URL = '/api';
 
 const categories = {
-    lead: { title: 'Instalação', color: '#007bff' },
-    prospect: { title: 'Suporte', color: '#28a745' },
-    inNegotiation: { title: 'Pagamento', color: '#ffc107' },
-    closed: { title: 'Cancelamento', color: '#dc3545' },
-    lost: { title: 'Outros', color: '#17a2b8' },
+    lead: { title: 'Pendente', color: '#ffb302' },
+    prospect: { title: 'Agendado', color: '#007bff' },
+    inNegotiation: { title: 'Em Execução', color: '#6f42c1' },
+    closed: { title: 'Suporte / Garantia', color: '#dc3545' },
+    lost: { title: 'Cancelados', color: '#6c757d' },
     done: { title: 'Concluídos', color: '#20c997' }
 };
 
@@ -43,10 +43,15 @@ function toggleForm() {
 async function addItem() {
     const titleInput = document.getElementById('itemTitle');
     const descInput = document.getElementById('itemDescription');
-    const catInput = document.getElementById('itemCategory');
+    const serviceInput = document.getElementById('itemServiceType');
+    const urgencyInput = document.getElementById('itemUrgency');
+    const scheduleInput = document.getElementById('itemSchedule');
 
-    if (!titleInput.value || !descInput.value) {
-        alert('Por favor, preencha todos os campos!');
+    // Default Status = Pendente (lead)
+    const catInput = 'lead';
+
+    if (!titleInput.value || !serviceInput.value) {
+        alert('Nome do Cliente e Tipo de Serviço são obrigatórios!');
         return;
     }
 
@@ -54,7 +59,10 @@ async function addItem() {
         id: Date.now(),
         title: titleInput.value,
         description: descInput.value,
-        category: catInput.value
+        service_type: serviceInput.value,
+        urgency: urgencyInput.value,
+        scheduled_at: scheduleInput.value,
+        category: catInput
     };
 
     try {
@@ -95,15 +103,51 @@ function formatDate(isoString) {
 let allItems = [];
 let detailModal;
 
+// Helper for urgency colors
+function getUrgencyColor(level) {
+    switch (level) {
+        case 'critical': return '#dc3545';
+        case 'high': return '#fd7e14';
+        case 'low': return '#20c997';
+        default: return '#adb5bd'; // normal
+    }
+}
+
+function getUrgencyLabel(level) {
+    switch (level) {
+        case 'critical': return 'CRÍTICA';
+        case 'high': return 'ALTA';
+        case 'low': return 'BAIXA';
+        default: return 'NORMAL';
+    }
+}
+
 function createItemCard(item) {
     const card = document.createElement('div');
     card.className = `item-card card-${item.category} animate-in`;
     card.setAttribute('draggable', 'true');
     card.id = `item-${item.id}`;
 
-    // Minimalist Content: Just Title
+    // Urgency Badge
+    const urgencyColor = getUrgencyColor(item.urgency || 'normal');
+
+    // Schedule Badge
+    let scheduleInfo = '';
+    if (item.scheduled_at) {
+        const date = new Date(item.scheduled_at);
+        const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+        const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        scheduleInfo = `<span class="badge bg-dark border border-secondary text-light ms-1" style="font-size: 0.7rem">📅 ${dateStr} ${timeStr}</span>`;
+    }
+
+    // Minimalist Content: Title + Badges
     card.innerHTML = `
-        <div class="item-title mb-0 text-truncate">${item.title}</div>
+        <div class="d-flex justify-content-between align-items-start mb-1">
+             <span class="badge" style="background-color: ${urgencyColor}; font-size: 0.65rem;">${getUrgencyLabel(item.urgency || 'normal')}</span>
+             ${scheduleInfo}
+        </div>
+        <div class="item-title mb-0 text-truncate fw-bold">${item.title}</div>
+        <div class="small text-muted text-truncate">${item.service_type || 'Geral'}</div>
     `;
 
     // Click to open detail
@@ -127,10 +171,25 @@ function openDetail(id) {
     if (!item) return;
 
     document.getElementById('d-title').textContent = item.title;
-    document.getElementById('d-description').textContent = item.description;
+
+    // Description with metadata prefix
+    const serviceType = item.service_type || 'Geral';
+    const urgency = getUrgencyLabel(item.urgency || 'normal');
+    let descContent = `🔧 SERVIÇO: ${serviceType}\n🚨 URGÊNCIA: ${urgency}\n`;
+
+    if (item.scheduled_at) {
+        const date = new Date(item.scheduled_at);
+        descContent += `📅 AGENDADO PARA: ${date.toLocaleString('pt-BR')}\n\n`;
+    } else {
+        descContent += `📅 AGENDADO PARA: Não informado\n\n`;
+    }
+
+    descContent += `📝 DESCRIÇÃO:\n${item.description}`;
+
+    document.getElementById('d-description').textContent = descContent;
 
     // Meta Info
-    const created = item.created_at ? `📅 ${formatDate(item.created_at)}` : '';
+    const created = item.created_at ? `Criado em: ${formatDate(item.created_at)}` : '';
     let completed = '';
     if (item.completed_by) {
         completed = ` | ✅ Concluído por ${item.completed_by} em ${formatDate(item.completed_at)}`;

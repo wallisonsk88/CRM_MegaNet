@@ -38,39 +38,64 @@
         </div>
     </div>
 
-    <!-- Modal Premium -->
+    <!-- Modal Novo Registro / OS -->
     <div class="modal fade" id="formModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content glass-modal">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold">Novo Cadastro</h5>
+                    <h5 class="modal-title fw-bold">Nova Ordem de Serviço</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
                     <div class="form-floating mb-3">
-                        <input type="text" class="form-control" id="itemTitle" placeholder="Nome do Cliente">
-                        <label for="itemTitle">Nome do Cliente</label>
+                        <input type="text" class="form-control" id="itemTitle" placeholder="Cliente / Local">
+                        <label for="itemTitle">Cliente / Local</label>
                     </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="form-floating">
+                                <select class="form-select" id="itemServiceType">
+                                    <option value="Instalação">Instalação</option>
+                                    <option value="Manutenção">Manutenção</option>
+                                    <option value="Mudança de Endereço">Mudança Endereço</option>
+                                    <option value="Retirada">Retirada</option>
+                                    <option value="Visita Técnica">Visita Técnica</option>
+                                </select>
+                                <label for="itemServiceType">Tipo de Serviço</label>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-floating">
+                                <select class="form-select" id="itemUrgency">
+                                    <option value="low">Baixa</option>
+                                    <option value="normal" selected>Normal</option>
+                                    <option value="high">Alta</option>
+                                    <option value="critical">Crítica (Urgente)</option>
+                                </select>
+                                <label for="itemUrgency">Urgência</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input type="datetime-local" class="form-control" id="itemSchedule">
+                        <label for="itemSchedule">Agendamento</label>
+                    </div>
+
                     <div class="form-floating mb-3">
                         <textarea class="form-control" id="itemDescription" placeholder="Descrição"
                             style="height: 100px"></textarea>
-                        <label for="itemDescription">Descrição do Atendimento</label>
+                        <label for="itemDescription">Descrição do Serviço</label>
                     </div>
-                    <div class="form-floating mb-3">
-                        <select class="form-select" id="itemCategory">
-                            <option value="lead">Instalação</option>
-                            <option value="prospect">Suporte</option>
-                            <option value="inNegotiation">Pagamento</option>
-                            <option value="closed">Cancelamento</option>
-                            <option value="lost">Outros</option>
-                        </select>
-                        <label for="itemCategory">Categoria</label>
-                    </div>
+
+                    <!-- Hidden Category Input (Defaults to 'lead' -> Pendente) -->
+                    <input type="hidden" id="itemCategory" value="lead">
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-secondary-glass" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-save" onclick="addItem()">Guardar Registro</button>
+                    <button type="button" class="btn btn-save" onclick="addItem()">Criar OS</button>
                 </div>
             </div>
         </div>

@@ -61,22 +61,38 @@ app.post('/api/items', async (req, res) => {
                 title TEXT NOT NULL,
                 description TEXT,
                 category TEXT NOT NULL,
+                service_type TEXT,
+                urgency TEXT DEFAULT 'normal',
+                scheduled_at TEXT,
                 completed_by TEXT,
                 created_at TEXT,
                 completed_at TEXT
             )
         `);
 
-        // Migration for older tables (Run individually to avoid skipping)
+        // Migration for new OS columns (Run individually)
         try { await db.execute('ALTER TABLE items ADD COLUMN completed_by TEXT'); } catch (e) { }
         try { await db.execute('ALTER TABLE items ADD COLUMN created_at TEXT'); } catch (e) { }
         try { await db.execute('ALTER TABLE items ADD COLUMN completed_at TEXT'); } catch (e) { }
+        try { await db.execute('ALTER TABLE items ADD COLUMN service_type TEXT'); } catch (e) { }
+        try { await db.execute('ALTER TABLE items ADD COLUMN urgency TEXT DEFAULT "normal"'); } catch (e) { }
+        try { await db.execute('ALTER TABLE items ADD COLUMN scheduled_at TEXT'); } catch (e) { }
 
         const created_at = new Date().toISOString();
 
         await db.execute({
-            sql: 'INSERT INTO items (id, title, description, category, completed_by, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-            args: [id, title, description, category, completed_by || null, created_at],
+            sql: 'INSERT INTO items (id, title, description, category, service_type, urgency, scheduled_at, completed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            args: [
+                id,
+                title,
+                description,
+                category, // Now acts as Status (pending, scheduled, etc)
+                req.body.service_type || 'General',
+                req.body.urgency || 'normal',
+                req.body.scheduled_at || null,
+                completed_by || null,
+                created_at
+            ],
         });
         res.json({ message: 'success', data: { ...req.body, created_at } });
     } catch (err) {
@@ -92,15 +108,25 @@ app.post('/api/items', async (req, res) => {
 app.put('/api/items/:id', async (req, res) => {
     try {
         const db = getDb();
-        const { category, completed_by, completed_at } = req.body;
+        const { category, completed_by, completed_at, urgency, scheduled_at } = req.body;
 
         if (completed_by !== undefined) {
+            // Conclusion logic
             const finalDate = completed_at || new Date().toISOString();
             await db.execute({
                 sql: 'UPDATE items SET category = ?, completed_by = ?, completed_at = ? WHERE id = ?',
                 args: [category, completed_by, finalDate, req.params.id],
             });
-        } else {
+        }
+        else if (urgency !== undefined || scheduled_at !== undefined) {
+            // Update details logic
+            await db.execute({
+                sql: 'UPDATE items SET urgency = ?, scheduled_at = ? WHERE id = ?',
+                args: [urgency, scheduled_at, req.params.id],
+            });
+        }
+        else {
+            // Move category logic
             await db.execute({
                 sql: 'UPDATE items SET category = ? WHERE id = ?',
                 args: [category, req.params.id],
