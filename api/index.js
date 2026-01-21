@@ -67,14 +67,10 @@ app.post('/api/items', async (req, res) => {
             )
         `);
 
-        // Migration for older tables
-        try {
-            await db.execute('ALTER TABLE items ADD COLUMN completed_by TEXT');
-            await db.execute('ALTER TABLE items ADD COLUMN created_at TEXT');
-            await db.execute('ALTER TABLE items ADD COLUMN completed_at TEXT');
-        } catch (e) {
-            // Column likely exists
-        }
+        // Migration for older tables (Run individually to avoid skipping)
+        try { await db.execute('ALTER TABLE items ADD COLUMN completed_by TEXT'); } catch (e) { }
+        try { await db.execute('ALTER TABLE items ADD COLUMN created_at TEXT'); } catch (e) { }
+        try { await db.execute('ALTER TABLE items ADD COLUMN completed_at TEXT'); } catch (e) { }
 
         const created_at = new Date().toISOString();
 
