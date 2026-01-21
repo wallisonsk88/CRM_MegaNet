@@ -137,6 +137,35 @@ body {
     transition: border-color 0.3s ease;
     scroll-snap-align: center;
     /* Snap to center on mobile */
+    overflow: hidden;
+    /* Ensure modal/popups don't get cut off if used, but main scroll is internal */
+}
+
+/* Scrollable Item Container */
+.category-column>div[id$="-items"] {
+    overflow-y: auto;
+    height: 100%;
+    padding-right: 5px;
+    /* Space for scrollbar */
+    padding-bottom: 2rem;
+}
+
+/* Custom Scrollbar for Items */
+.category-column>div[id$="-items"]::-webkit-scrollbar {
+    width: 4px;
+}
+
+.category-column>div[id$="-items"]::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.category-column>div[id$="-items"]::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.category-column>div[id$="-items"]::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Feature: Conclude Button */

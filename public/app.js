@@ -118,7 +118,6 @@ function createItemCard(item) {
         ${extraInfo}
         <div class="d-flex justify-content-between align-items-center mt-3">
             ${actionButtons}
-            <button class="btn-delete" onclick="deleteItem(${item.id})">Remover</button>
         </div>
     `;
 
