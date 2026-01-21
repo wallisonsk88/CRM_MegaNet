@@ -59,22 +59,28 @@ app.post('/api/items', async (req, res) => {
                 title TEXT NOT NULL,
                 description TEXT,
                 category TEXT NOT NULL,
-                completed_by TEXT
+                completed_by TEXT,
+                created_at TEXT,
+                completed_at TEXT
             )
         `);
 
         // Migration for older tables
         try {
             await db.execute('ALTER TABLE items ADD COLUMN completed_by TEXT');
+            await db.execute('ALTER TABLE items ADD COLUMN created_at TEXT');
+            await db.execute('ALTER TABLE items ADD COLUMN completed_at TEXT');
         } catch (e) {
             // Column likely exists
         }
 
+        const created_at = new Date().toISOString();
+
         await db.execute({
-            sql: 'INSERT INTO items (id, title, description, category, completed_by) VALUES (?, ?, ?, ?, ?)',
-            args: [id, title, description, category, completed_by || null],
+            sql: 'INSERT INTO items (id, title, description, category, completed_by, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+            args: [id, title, description, category, completed_by || null, created_at],
         });
-        res.json({ message: 'success', data: req.body });
+        res.json({ message: 'success', data: { ...req.body, created_at } });
     } catch (err) {
         console.error('API Error:', err);
         res.status(500).json({ error: err.message });
@@ -84,12 +90,13 @@ app.post('/api/items', async (req, res) => {
 app.put('/api/items/:id', async (req, res) => {
     try {
         const db = getDb();
-        const { category, completed_by } = req.body;
+        const { category, completed_by, completed_at } = req.body;
 
         if (completed_by !== undefined) {
+            const finalDate = completed_at || new Date().toISOString();
             await db.execute({
-                sql: 'UPDATE items SET category = ?, completed_by = ? WHERE id = ?',
-                args: [category, completed_by, req.params.id],
+                sql: 'UPDATE items SET category = ?, completed_by = ?, completed_at = ? WHERE id = ?',
+                args: [category, completed_by, finalDate, req.params.id],
             });
         } else {
             await db.execute({

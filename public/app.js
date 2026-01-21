@@ -78,6 +78,25 @@ async function addItem() {
     }
 }
 
+card.addEventListener('dragend', () => {
+    card.style.opacity = '1';
+});
+
+const categoryContainer = document.getElementById(`${item.category}-items`);
+if (categoryContainer) categoryContainer.appendChild(card);
+}
+
+function formatDate(isoString) {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    return date.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
 function createItemCard(item) {
     const card = document.createElement('div');
     card.className = `item-card card-${item.category} animate-in`;
@@ -87,8 +106,13 @@ function createItemCard(item) {
     let actionButtons = '';
     let extraInfo = '';
 
+    // Dates
+    const createdDate = item.created_at ? `<div class="date-info mt-2 text-muted" style="font-size: 0.75rem;">📅 Registrado: ${formatDate(item.created_at)}</div>` : '';
+    let completedDate = '';
+
     if (item.category === 'done' && item.completed_by) {
-        extraInfo = `<div class="completed-info mt-2"><small>✅ Concluído por: <strong>${item.completed_by}</strong></small></div>`;
+        const dateStr = item.completed_at ? ` em ${formatDate(item.completed_at)}` : '';
+        extraInfo = `<div class="completed-info mt-2"><small>✅ Concluído por: <strong>${item.completed_by}</strong>${dateStr}</small></div>`;
     }
     else if (item.category !== 'done' && item.category !== 'closed') {
         actionButtons = `<button class="btn-conclude" onclick="concludeItem(${item.id})">Concluir</button>`;
@@ -97,6 +121,7 @@ function createItemCard(item) {
     card.innerHTML = `
         <div class="item-title">${item.title}</div>
         <div class="item-description">${item.description}</div>
+        ${createdDate}
         ${extraInfo}
         <div class="d-flex justify-content-between align-items-center mt-3">
             ${actionButtons}
