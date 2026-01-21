@@ -30,6 +30,7 @@ async function initializeLayout() {
         container.appendChild(column);
     });
 
+    detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
     formModal = new bootstrap.Modal(document.getElementById('formModal'));
     await loadItems();
     setupDragAndDrop();
@@ -90,36 +91,23 @@ function formatDate(isoString) {
     });
 }
 
+// Global cache for items to support modal lookup
+let allItems = [];
+let detailModal;
+
 function createItemCard(item) {
     const card = document.createElement('div');
     card.className = `item-card card-${item.category} animate-in`;
     card.setAttribute('draggable', 'true');
     card.id = `item-${item.id}`;
 
-    let actionButtons = '';
-    let extraInfo = '';
-
-    // Dates
-    const createdDate = item.created_at ? `<div class="date-info mt-2 text-muted" style="font-size: 0.75rem;">📅 Registrado: ${formatDate(item.created_at)}</div>` : '';
-    let completedDate = '';
-
-    if (item.category === 'done' && item.completed_by) {
-        const dateStr = item.completed_at ? ` em ${formatDate(item.completed_at)}` : '';
-        extraInfo = `<div class="completed-info mt-2"><small>✅ Concluído por: <strong>${item.completed_by}</strong>${dateStr}</small></div>`;
-    }
-    else if (item.category !== 'done' && item.category !== 'closed') {
-        actionButtons = `<button class="btn-conclude" onclick="concludeItem(${item.id})">Concluir</button>`;
-    }
-
+    // Minimalist Content: Just Title
     card.innerHTML = `
-        <div class="item-title">${item.title}</div>
-        <div class="item-description">${item.description}</div>
-        ${createdDate}
-        ${extraInfo}
-        <div class="d-flex justify-content-between align-items-center mt-3">
-            ${actionButtons}
-        </div>
+        <div class="item-title mb-0 text-truncate">${item.title}</div>
     `;
+
+    // Click to open detail
+    card.onclick = () => openDetail(item.id);
 
     card.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('text/plain', item.id);
@@ -132,6 +120,42 @@ function createItemCard(item) {
 
     const categoryContainer = document.getElementById(`${item.category}-items`);
     if (categoryContainer) categoryContainer.appendChild(card);
+}
+
+function openDetail(id) {
+    const item = allItems.find(i => i.id == id);
+    if (!item) return;
+
+    document.getElementById('d-title').textContent = item.title;
+    document.getElementById('d-description').textContent = item.description;
+
+    // Meta Info
+    const created = item.created_at ? `📅 ${formatDate(item.created_at)}` : '';
+    let completed = '';
+    if (item.completed_by) {
+        completed = ` | ✅ Concluído por ${item.completed_by} em ${formatDate(item.completed_at)}`;
+    }
+    document.getElementById('d-meta').textContent = created + completed;
+
+    // Actions
+    const actionContainer = document.getElementById('d-actions');
+    actionContainer.innerHTML = '';
+
+    if (item.category !== 'done' && item.category !== 'closed') {
+        const btnConclude = document.createElement('button');
+        btnConclude.className = 'btn btn-success fw-bold px-4';
+        btnConclude.textContent = 'Concluir Atendimento';
+        btnConclude.onclick = () => {
+            detailModal.hide();
+            concludeItem(item.id);
+        };
+        actionContainer.appendChild(btnConclude);
+    }
+
+    // Optional: Add Delete back strictly inside modal if desired, or keep it removed as per previous task.
+    // User asked to remove it from card, maybe keeps it clean. Leaving out for now.
+
+    detailModal.show();
 }
 
 async function concludeItem(id) {
@@ -195,6 +219,7 @@ async function loadItems() {
             if (container) container.innerHTML = '';
         });
 
+        allItems = data; // Cache for modal
         data.forEach(item => createItemCard(item));
     } catch (error) {
         console.error('Erro ao carregar itens:', error);

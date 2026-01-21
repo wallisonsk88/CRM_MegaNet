@@ -276,15 +276,16 @@ body {
 }
 
 .item-card:hover {
-    background: rgba(255, 255, 255, 0.05);
-    transform: scale(1.02);
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .item-title {
     font-weight: 600;
-    font-size: 1rem;
-    margin-bottom: 0.4rem;
+    font-size: 0.95rem;
     color: var(--text-main);
+    margin: 0;
 }
 
 .item-description {
