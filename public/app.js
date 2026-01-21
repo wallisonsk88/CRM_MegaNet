@@ -70,7 +70,8 @@ async function addItem() {
             formModal.hide();
         } else {
             const err = await response.json();
-            alert('Erro ao salvar: ' + (err.details || 'Erro desconhecido'));
+            console.error('SERVER ERROR:', err);
+            alert('Erro ao salvar: ' + (err.message || err.error || 'Erro desconhecido'));
         }
     } catch (error) {
         console.error('Erro ao adicionar item:', error);
